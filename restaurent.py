@@ -62,6 +62,34 @@ class RestaurantReview:
             text=[i.text for i in p]
             content.append("\n".join(text))
         return content
+    def get_review_score(self):
+        wd=self.wd
+        items=self.get_items()
+        css=".rating.reviewItemInline > span"
+        c1=re.compile(r'[0-9]+$')
+        result=[]
+        for item in items:
+            try:
+                a1=item.find_element_by_css_selector(css)
+                a2=a1.get_attribute('class')
+                b1=c1.findall(a2)
+                result.append(b1[0])
+            except:
+                result.append("")
+        return result
+    def get_helpful_cnt(self):
+        wd=self.wd
+        css=".numHelp"
+        items=self.get_items()
+        result=[]
+        for item in items:
+            try:
+                a1=item.find_element_by_css_selector(css)
+                a2=a1.text.strip()
+                result.append(a2)
+            except:
+                result.append("")
+        return result
     def get_eval_info(self):
         wd=self.wd
         xpath="//span[@class='stayed']/.."
@@ -324,6 +352,14 @@ class ListUpRestarent:
         return output
 def main_review(chrome,name,page_no=1,end=-1,wait=5):
     res=RestaurantReview(chrome)
+    jump=page_no-1
+    temp_page_no=1
+    while jump > 0:
+        if res.go_next(wait):
+            break
+        print("Page jump!, current=%d"%(temp_page_no,))
+        temp_page_no+=1
+        jump-=1
     while True:
         sleep(1)
         res.click_more()
@@ -335,11 +371,13 @@ def main_review(chrome,name,page_no=1,end=-1,wait=5):
         data['user_region']=res.get_user_region()
         data['user_badging']=res.get_user_badging()
         data['title']=res.get_title()
+        data['review_score']=res.get_review_score()
         data['eval']=res.get_eval_info()
         data['recommend']=res.get_recommend()
         data['photo_cnt']=res.get_photo_cnt()
         data['photo_urls']=res.get_photo_url()
         data['region_exp']=res.get_region_exp()
+        data['helpful_cnt']=res.get_helpful_cnt()
         data['content']=res.get_content()
         if res.go_next(wait):
             break
